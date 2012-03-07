@@ -1,0 +1,16 @@
+{
+	"name": "MyProject",
+	"version": "0.0.1",
+	"dependencies": {
+		"express": "*",
+		"socket.io": "*",
+		"underscore": "*",
+		"jade": "*",
+		"skull.io": "*",
+		"mongoose": "*",
+		"iced-coffee-script": "*"
+	},
+	"scripts": {
+		"start":"iced server"
+	}
+}

@@ -1,0 +1,37 @@
+!!! 5
+html
+	head
+		title My project
+		- if (isProduction)
+			link(rel='stylesheet', type='text/css', href='/css/app.css')
+		- else
+			block css
+				link(rel='stylesheet', type='text/css', href='/assets/lib/bootstrap-2.0.0.min.css')
+				link(rel='stylesheet', type='text/css', href='/css/main.css')
+
+		- if (isProduction)
+			script(src='/js/app.js')
+		- else
+			block scripts
+				script(src='/assets/lib/jquery-1.7.1.min.js')
+				script(src='/js/index.js')
+
+body
+	.navbar.navbar-fixed
+		.navbar-inner
+			.container
+				ul.nav.pull-right
+					li 
+						a(href='/') Home
+					li
+						a(href='/about') About
+				a.brand(href='/') 
+					strong My Project
+
+	.container#main-container(style='margin-top: 50px')
+		block content
+	
+	block templates
+
+	- if (isProduction)
+		!= partial('analytics')
