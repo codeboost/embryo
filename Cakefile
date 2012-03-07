@@ -37,14 +37,29 @@ task 'mkdirs', 'Create the directory structure', ->
   '''
   createDirectories structure
 
+
+
+
 task 'clean', 'Clean build output', ->
-	#rm -r build/debug/js/*
-	#rm -r build/debug/css/*
-	#rm -r build/release/*
-	
+	wfn = (fn) ->
+		return (err) ->
+			console.log 'Warning: ' + err if err
+			fn?()
+
+	exec 'rm -r build/debug/js/*', wfn ->
+		exec 'rm -r build/debug/css/*', wfn ->
+			exec 'rm -r build/release/*', wfn ->
+				console.log 'All done.'
 
 task 'build', 'Build application', (args) ->
-	#iced -c client/js -> build/debug/js/
+	
+	exec 'iced -c -o build/debug/js/ client/js', (err, stdout, stderr) ->
+		return console.log 'Error: ', err if err
+
+		exec 'stylus -c -o build/debug/css client/css'
+
+
+
 	#stylus -c client/css -> build/debug/css
 
 
