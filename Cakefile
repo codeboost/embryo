@@ -208,37 +208,23 @@ task 'clean', 'Clean build output', (args) ->
 
 	console.log 'Done.'
 
-make_dirs = (structure) ->
-	#create directories
-	dlist = structure.split '\n'
+task 'init', 'Initialize project', ->
 
-	for dir in dlist
-		console.log 'Creating ', dir
-		await exec "mkdir -p #{dir}", defer(err)
+	console.log 'Initializing server configuration'
+	await exec 'cp server/config.default ./server-config.coffee', defer(err)
 
-task 'mkdirs', 'Create the directory structure', ->
+	return console.log err if err
 
-	structure = '''
-		build
-		build/debug
-		build/release
-		build/debug/css
-		build/debug/js
-		assets
-		assets/lib
-		assets/lib/css
-		assets/lib/js
-		assets/images
-		client
-		client/css
-		client/js
-		server
-		server/models
-		views
-		storage 
-	'''
-	make_dirs structure
+	console.log 'Creating storage directory'
 
+	await exec 'mkdir -p storage/user storage/tmp', defer(err)
+	return console.log err if err
+
+	await exec 'chmod -R 777 storage', defer(err)
+	return console.log err if err
+
+	console.log 'Project initialized. '
+	console.log 'Now edit server-config.coffee and ./go'
 
 
 
