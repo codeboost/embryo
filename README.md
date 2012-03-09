@@ -14,16 +14,31 @@ Clone this repository and remove the .git directory.
 	git clone git@github.com:codeboost/embryo.git .
 	rm -r .git/
 
+Initialize the new project: Will install basic dependencies, create directories and create the server-config.coffee
 
-Server:
-	mongoose
-	socket.io
-	skull.io
-	express
-	jade
-
-Client:
-	Backbone
-	Stylus
+	./init.sh
 
 
+Now you can edit server-config.coffee and adjust the parameters. This file is not tracked by git (.gitignore) so you
+can have different server-config.coffee files on different machines.
+
+
+Finally, create the git repository for your new project:
+
+	git init
+	git add -A
+	git commit -m 'Initial'
+
+
+To build the client application, run:
+
+	iced cake build
+
+
+To start the server in release mode:
+
+	iced server
+
+To start the server in debug mode:
+
+	iced server debug
