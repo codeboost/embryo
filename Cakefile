@@ -6,17 +6,6 @@ fs = require 'fs'
 stitch = require 'stitch'
 path = require 'path'
 
-bail = (msg) ->
-	console.log msg
-	process.exit -1
-
-wfn = (fn) ->
-	(err) ->
-		if err
-			console.log "Error: " + err 
-			process.exit -1
-		fn?.apply this, arguments
-
 #stitch files in array appFiles and save as destFilename
 stitch_files = (appFiles, destFilename, callback) ->
  appContents = new Array remaining = appFiles.length
@@ -26,7 +15,6 @@ stitch_files = (appFiles, destFilename, callback) ->
       appContents[index] = fileContents
       process() if --remaining is 0
   process = ->
-  	console.log "Saving to #{destFilename}"
   	fs.writeFile destFilename, appContents.join('\n\n'), 'utf8', callback
 
 #process srcPaths, recurse directories and gather a list of all files
@@ -60,33 +48,12 @@ all_files = (srcPaths, callback) ->
 	callback? null, allFiles
 
 
-
-task 'clean', 'Clean build output', ->
-
-	console.log 'Cleaning build output directories...'
-
-	clean = (conf, callback) ->
-
-		await exec "rm -r #{conf.client.output}", defer(err)
-		console.log err if err
-
-		await exec "rm -r #{conf.minify.output}", defer(err)
-		console.log err if err
-
-		callback()
-
-	await clean Config.coffee, defer()
-
-	await clean Config.stylus, defer()
-
-	console.log 'Done.'
-
-
 class BuildStep
-	constructor: (@config) ->
+	constructor: (@config, @stepName) ->
 
 	build: (callback) ->
-		@clean ->
+		console.log @stepName || 'Untitled step'
+		@clean =>
 			@compile callback
 
 	clean: (callback) -> callback?()
@@ -99,18 +66,17 @@ class BuildStep
 	warn: (err) ->
 		console.log 'Warning: ' + err
 
-class BuildJS extends BuildStep
+class CompileJS extends BuildStep
 	clean: (callback) ->
-		await exec 'rm -r #{@config.output}/*.js', defer(err)
-		@warn err if err
+		await exec "rm -r #{@config.output}/*.js", defer(err)
 		callback?()
 
 	compile: (callback) ->
-		await exec 'mkdir -p #{config.output}', defer(err)
+		await exec "mkdir -p #{@config.output}", defer(err)
 		@die err if err
-		src = if _.isArray source then source else [source]
-		sources = @config.source.join ' '
-		await exec "iced -c -o #{conf.client.output} #{sources}", defer(err)
+		src = if _.isArray @config.source then @config.source else [@config.source]
+		sources = src.join ' '
+		await exec "iced -c -o #{@config.output} #{sources}", defer(err)
 		@die err if err
 		callback?()
 
@@ -136,151 +102,111 @@ class StitchJS extends BuildStep
 class MinifyJS extends BuildStep
 	clean: (callback) ->
 		await fs.unlink @config.output, defer(err)
-		@warn err if err
 		callback?()
 
 	compile: (callback) ->
 		spawn = require('child_process').spawn
-		ret = spawn 'uglifyjs', ['-o', conf.minify.output, conf.minify.source]
+		ret = spawn 'uglifyjs', ['-o', @config.output, @config.source]
 		ret.on 'exit', (code) =>
 			@die 'uglifyjs not found. use `npm install -g uglifyjs` to install.' if code is 127
 			@die code if code isnt 0
+			
+			if @config.remove_source 
+				await fs.unlink @config.source, defer(err)
+
 			callback?()
 
 class CompileStylus extends BuildStep
 	clean: (callback) ->
-		await exec "rm -r #{config.output}/*", defer(err)
+		await exec "rm -r #{@config.output}/*", defer(err)
 		@warn err if err
-
-	compile: (callback) ->
-		await exec "mkdir -p #{config.output}", defer(err)
-		@die err if err
-		
-
-
-# Javascript build
-compile_js = (callback) ->
-	conf = Config.coffee
-	console.log 'Compiling Coffee-script'
-	sources = conf.client.source.join ' '
-	exec "iced -c -o #{conf.client.output} #{sources}", wfn callback
-
-stitch_js = (callback) ->
-	conf = Config.coffee
-	console.log 'Stitching files'
-	pkgc = 
-		paths: [conf.client.output]
-		dependencies: conf.deps
-
-	pkg = stitch.createPackage pkgc
-
-	pkg.compile wfn (err, source) ->
-		filename = conf.minify.source
-		fs.writeFile conf.minify.source, source, wfn callback
-
-minify_js = (callback) ->
-	conf = Config.coffee
-	console.log 'Minifying'
-	spawn = require('child_process').spawn
-	#exec doesn't seem to work for uglify...
-	ret = spawn 'uglifyjs', ['-o', conf.minify.output, conf.minify.source]
-	ret.on 'exit', (code) ->
-		if code != 0
-			if code == 127
-				console.log 'uglifyjs not found. use `npm install -g uglifyjs` to install.'
-			else
-				console.log 'Uglify error: ', code
-			process.exit -1
-			return 
-		if conf.minify.remove_source 
-			console.log 'Removing ', conf.minify.source
-			fs.unlinkSync conf.minify.source
 		callback?()
 
-build_js = (callback) ->
-	await compile_js defer()
-	await stitch_js defer()
-	await minify_js defer()
-	callback?()
+	compile: (callback) ->
+		await exec "mkdir -p #{@config.output}", defer(err)
+		@die err if err
 
+		src = if _.isArray @config.source then @config.source else [@config.source]
+		sources = src.join ' '
+		await exec "stylus -o #{@config.output} #{sources}", defer(err)
+		@die err if err 
+		callback?()
 
-#Stylus build
+class StitchCSS extends BuildStep
+	clean: (callback) ->
+		await fs.unlink "#{@config.output}", defer err
+		@warn err if err
+		callback?()
 
-compile_stylus = (callback) ->
-	conf = Config.stylus
-	console.log 'Compiling stylus files'
-	sources = conf.client.source.join ' '
-	exec "stylus -o #{conf.client.output} #{sources}", wfn callback
+	compile: (callback) ->
+		await all_files @config.deps, defer(err, allDepFiles)
+		@die err if err
 
-stitch_css = (callback) ->
-	conf = Config.stylus
+		await all_files @config.source, defer(err, allClientFiles)
+		@die err if err
 
-	await all_files conf.deps, defer(err, allDepFiles)
-	return bail err if err
+		allFiles = allDepFiles.concat allClientFiles
 
-	await all_files conf.client.output, defer(err, allClientFiles)
-	return bail err if err
+		await stitch_files allFiles, @config.output, defer(err)
+		@die err if err
+		callback?()
 
-	allFiles = allDepFiles.concat allClientFiles
+class MinifyCSS extends BuildStep
+	clean: (callback) ->
+		await fs.unlink @config.output, defer(err)
+		callback?()
 
-	console.log conf.minify.source
-	dest = path.join __dirname, conf.minify.source
+	compile: (callback) ->
+		await exec "cp #{@config.source} #{@config.output}", defer(err)
+		@die err if err
+		if @config.remove_source 
+			await fs.unlink @config.source, defer(err)
 
-	console.log 'dest is ', dest
-	
-	#stitch all files into conf.minify.source (build/release/css)
-	stitch_files allFiles, dest, callback
+class Builder 
+	constructor: (@tasks) ->
 
+	execute: (taskName, callback) ->
+		for task in @tasks
+			await task[taskName] defer()
+		callback?()
 
-#Stylus build 
-build_stylus = (callback) ->
-	conf = Config.stylus
+	compile: (callback) -> @execute 'compile', callback
+	build: (callback) -> @execute 'build', callback
+	clean: (callback) -> @execute 'clean', callback
 
-	await compile_stylus defer(err)
-	return console.log err if err
+BuildJS = (config) -> new Builder [
+	new CompileJS config.compile, 'Building coffee script.'
+	new StitchJS config.stitch, 'Stiching dependencies and javascript.'
+	new MinifyJS config.minify, 'Minifying javascript.'
+]
 
-	await stitch_css defer(err)
-
-
-create_build_dirs: ->
-	structure = []
-	structure.push 'build/release'
-	structure.push Config.coffee.client.output
-	structure.push Config.stylus.client.output
+BuildCSS = (config) -> new Builder [
+	new CompileStylus config.compile, 'Compiling stylus.'
+	new StitchCSS config.stitch, 'Stitching CSS files together.'
+	new MinifyCSS config.minify, 'Minifying CSS.'
+]
 
 
 task 'build', 'Build application', (args) ->
+	await exec "mkdir -p #{Config.dir.debug}", defer(err)	
+	await exec "mkdir -p #{Config.dir.release}", defer(err)
 
-	console.log 'Building coffeescript...'
-	await build_js defer()
+	console.log 'Building JS'
+	await BuildJS(Config.coffee).build defer()
+	
+	console.log 'Building CSS'
+	await BuildCSS(Config.stylus).build defer()
 
-	console.log 'Building stylus...'
+	console.log "Done."
 
-	await build_stylus defer()
+task 'clean', 'Clean build output', (args) ->
+	console.log 'Cleaning JS'
+	await new BuildJS(Config.coffee).clean defer()
+
+	console.log 'Cleaning CSS'
+	await new BuildCSS(Config.stylus).clean defer()
 
 	console.log 'Done.'
-
-task 'init', 'Initialize a new app instance', (args) ->
-	#Copy server/config.default to ../config.coffee
-
-	dirs = '''
-		storage
-		storage/user
-		storage/tmp
-	'''
-
-	console.log 'Creating storage folders'
-	createDirectories dirs
-
-	exec 'cp server/config.default ./config.coffee', (err, stdout, stderr) ->
-		throw err if err
-
-		console.log 'Installing dependencies...'
-		exec 'npm install', (err) ->
-			throw err if err
-			console.log 'init done.'
-			console.log 'Next step: edit config.coffee'
-			console.log 'And after you can: ./go'
 
 make_dirs = (structure) ->
 	#create directories
@@ -288,11 +214,7 @@ make_dirs = (structure) ->
 
 	for dir in dlist
 		console.log 'Creating ', dir
-
-		try
-			fs.mkdirSync dir 
-		catch e
-			console.log '..failed: ', e
+		await exec "mkdir -p #{dir}", defer(err)
 
 task 'mkdirs', 'Create the directory structure', ->
 
