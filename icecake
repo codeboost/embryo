@@ -1,0 +1,4 @@
+#path to the iced-coffee-script cake. change it to reflect your system
+#use which iced, and cake is relative at: ../lib/node_modules/iced-coffee-script/bin/cake
+/usr/local/lib/node_modules/iced-coffee-script/bin/cake $1
+

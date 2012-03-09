@@ -8,7 +8,8 @@
 		"jade": "*",
 		"skull.io": "*",
 		"mongoose": "*",
-		"iced-coffee-script": "*"
+		"iced-coffee-script": "*",
+		"stitch": "*"
 	},
 	"scripts": {
 		"start":"iced server"
