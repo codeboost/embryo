@@ -1,4 +1,4 @@
 !.gitignore
 node_modules
 .DS_Store
-config.coffee
+server-config.coffee

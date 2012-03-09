@@ -1,4 +1,3 @@
-require 'iced-coffee-script'
 {exec} = require 'child_process'
 Config = require './build/build-config.coffee'
 _ = require 'underscore'
@@ -187,6 +186,15 @@ BuildCSS = (config) -> new Builder [
 ]
 
 
+Tasks = {}
+
+task = (name, description, callback) ->
+	Tasks[name] = 
+		name: name
+		description: description
+		run: callback
+
+
 task 'build', 'Build application', (args) ->
 	await exec "mkdir -p #{Config.dir.debug}", defer(err)	
 	await exec "mkdir -p #{Config.dir.release}", defer(err)
@@ -223,8 +231,39 @@ task 'init', 'Initialize project', ->
 	await exec 'chmod -R 777 storage', defer(err)
 	return console.log err if err
 
+	console.log 'Installing dependencies...'
+
+	await exec 'npm install', defer(err)
+
+	return console.log err if err
+
 	console.log 'Project initialized. '
 	console.log 'Now edit server-config.coffee and ./go'
+
+task = Tasks[process.argv[2]]
+
+if not task
+	console.log 'Available tasks: '
+
+	for key, task of Tasks
+		console.log task.name + '\t' + task.description
+	process.exit 0
+
+task.run()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
