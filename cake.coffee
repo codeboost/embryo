@@ -164,6 +164,7 @@ class MinifyCSS extends BuildStep
 		@die err if err
 		if @config.remove_source 
 			await fs.unlink @config.source, defer(err)
+		callback?()
 
 class Builder 
 	constructor: (@tasks) ->
