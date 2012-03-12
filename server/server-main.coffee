@@ -93,7 +93,7 @@ init = ->
 		res.sendfile $Path['/app.js']
 
 	app.get '/app.css', (req, res) ->
-		res.sendFile $Path['/app.css']
+		res.sendfile $Path['/app.css']
 
 	app.get '/assets/*', (req, res) ->
 		res.sendfile path.join $Path['assets'], req.params[0]

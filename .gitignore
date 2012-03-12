@@ -2,3 +2,5 @@
 node_modules
 .DS_Store
 server-config.coffee
+build/debug
+build/release
