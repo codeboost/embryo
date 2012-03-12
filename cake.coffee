@@ -1,9 +1,14 @@
 {exec} = require 'child_process'
-Config = require './build/config.coffee'
+Config = require './build/config'
 _ = require 'underscore'
 fs = require 'fs'
 stitch = require 'stitch'
 path = require 'path'
+spawn = require('child_process').spawn
+require 'colors'
+
+console.log 'Embryo builder'.green.bold
+
 
 #stitch files in array appFiles and save as destFilename
 stitch_files = (appFiles, destFilename, callback) ->
@@ -63,7 +68,7 @@ class BuildStep
 		process.exit -1
 
 	warn: (err) ->
-		console.log 'Warning: ' + err
+		#console.log 'Warning: ' + err
 
 class CompileJS extends BuildStep
 	clean: (callback) ->
@@ -104,7 +109,6 @@ class MinifyJS extends BuildStep
 		callback?()
 
 	compile: (callback) ->
-		spawn = require('child_process').spawn
 		ret = spawn 'uglifyjs', ['-o', @config.output, @config.source]
 		ret.on 'exit', (code) =>
 			@die 'uglifyjs not found. use `npm install -g uglifyjs` to install.' if code is 127
@@ -174,15 +178,15 @@ class Builder
 	clean: (callback) -> @execute 'clean', callback
 
 BuildJS = (config) -> new Builder [
-	new CompileJS config.compile, 'Building coffee script.'
-	new StitchJS config.stitch, 'Stiching dependencies and javascript.'
-	new MinifyJS config.minify, 'Minifying javascript.'
+	new CompileJS config.compile, 'Building coffee script.'.yellow
+	new StitchJS config.stitch, 'Stiching dependencies and javascript.'.yellow
+	new MinifyJS config.minify, 'Minifying javascript.'.yellow.bold
 ]
 
 BuildCSS = (config) -> new Builder [
-	new CompileStylus config.compile, 'Compiling stylus.'
-	new StitchCSS config.stitch, 'Stitching CSS files together.'
-	new MinifyCSS config.minify, 'Minifying CSS.'
+	new CompileStylus config.compile, 'Compiling stylus.'.blue
+	new StitchCSS config.stitch, 'Stitching CSS files together.'.blue
+	new MinifyCSS config.minify, 'Minifying CSS.'.blue.bold
 ]
 
 
@@ -196,22 +200,23 @@ task = (name, description, callback) ->
 
 
 task 'build', 'Build application', (args) ->
-	await exec "mkdir -p #{Config.dir.debug}", defer(err)	
-	await exec "mkdir -p #{Config.dir.release}", defer(err)
 
-	console.log 'Building JS'
+	await exec "mkdir -p #{Config.dirs.debug}", defer(err)	
+	await exec "mkdir -p #{Config.dirs.release}", defer(err)
+
+	console.log 'Building JS'.yellow
 	await BuildJS(Config.coffee).build defer()
 	
-	console.log 'Building CSS'
+	console.log 'Building CSS'.blue
 	await BuildCSS(Config.stylus).build defer()
 
 	console.log "Done."
 
 task 'clean', 'Clean build output', (args) ->
-	console.log 'Cleaning JS'
+	console.log 'Cleaning JS'.yellow
 	await new BuildJS(Config.coffee).clean defer()
 
-	console.log 'Cleaning CSS'
+	console.log 'Cleaning CSS'.green
 	await new BuildCSS(Config.stylus).clean defer()
 
 	console.log 'Done.'
@@ -240,6 +245,62 @@ task 'init', 'Initialize project', ->
 	console.log 'Project initialized. '
 	console.log 'Now edit server-config.coffee and ./go'
 
+
+spawn_process = (command, cbStruct) ->
+	parts = command.split(' ')
+
+	name = parts.shift()
+
+	proc = spawn name, parts
+	proc.on 'exit', (code) ->
+		console.log "Process #{name} has exited with exit code #{code}"
+		cbStruct.exit(code)
+
+	proc.stdout.on 'data', (data) ->
+		cbStruct.stdout(data)
+
+	proc.stderr.on 'data', (data) ->
+		cbStruct.err(data)
+
+	return proc
+
+task 'watch', 'Watch application files for change and recompile', (args) ->
+
+	ps = spawn_process "iced -c -w -o #{Config.coffee.compile.output} #{Config.coffee.compile.source}", 
+		exit: -> 
+			process.exit 0
+
+		err: (data) -> 
+			console.log 'Error: ' + data
+
+		stdout: (data) ->
+			console.log data.toString().yellow
+
+	console.log 'Started coffee compiler. pid = ', ps.pid
+
+
+	config = Config.stylus.compile
+	src = if _.isArray config.source then config.source else [config.source]
+	sources = src.join ' '
+
+
+	ps = spawn_process "stylus -w -o #{Config.stylus.compile.output} #{sources}", 
+		exit: ->
+			process.exit 0
+		
+		err: (data) ->
+			console.log ("Error: " + data).red
+
+		stdout: (data) ->
+			console.log data.toString().blue
+
+#	await exec 'stylus -o #{Config.stylus.compile.output} #{sources} &', defer(err)
+
+#	return console.log "Error starting stylus compiler: " + err
+
+#	console.log 'Started with pid = ' + process.pid
+
+
 task = Tasks[process.argv[2]]
 
 if not task
@@ -248,6 +309,8 @@ if not task
 	for key, task of Tasks
 		console.log task.name + '\t' + task.description
 	process.exit 0
+
+console.log 'Executing task: '.green, process.argv[2].green.bold
 
 task.run()
 
