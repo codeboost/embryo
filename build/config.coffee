@@ -1,4 +1,5 @@
 #No trailing `/` after directory name!
+#Paths are relative to server root!
 
 dirs = exports.dirs = 
 	release: 'build/release'

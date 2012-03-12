@@ -1,7 +1,10 @@
-appName: 'My Project'
-appVersion: '0.1'
-pageTitle: 'My Project Web site'
-server:
-	listen:
-		host: '0.0.0.0'
-		port: 80
+module.exports = 
+	appName: 'My Project'
+	appVersion: '0.1'
+	pageTitle: 'My Project Web site'
+	server:
+		listen:
+			host: '0.0.0.0'
+			port: 80
+	db:
+		path:  'mongodb://localhost/myproject'

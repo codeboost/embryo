@@ -1,5 +1,5 @@
 {exec} = require 'child_process'
-Config = require './build/build-config.coffee'
+Config = require './build/config.coffee'
 _ = require 'underscore'
 fs = require 'fs'
 stitch = require 'stitch'

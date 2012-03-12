@@ -1,13 +1,9 @@
 !!! 5
 html
 	head
-		title My project
-		- if (isProduction)
-			link(rel='stylesheet', type='text/css', href='/css/app.css')
-		- else
-			block css
-				link(rel='stylesheet', type='text/css', href='/assets/lib/css/bootstrap-2.0.0.min.css')
-				link(rel='stylesheet', type='text/css', href='/css/main.css')
+		title Administration
+			link(rel='stylesheet', type='text/css', href='/lib/css/bootstrap-2.0.0.min.css')
+			link(rel='stylesheet', type='text/css', href='/css/main.css')
 
 		- if (isProduction)
 			script(src='/js/app.js')
