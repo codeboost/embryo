@@ -6,9 +6,13 @@ block scripts
 	script(src='/assets/lib/js/console-dummy.js')
 	script(src='/assets/lib/js/module.js')
 	script(src='/js/index.js')
-	script
-		require('index').start()
 
+block startMain
+	script
+		console.log('Start main');
+		require('index').start();
+
+		
 block content
 	.row
 		h3 Hello, World !

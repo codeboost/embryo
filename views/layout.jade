@@ -6,21 +6,35 @@ html
 			link(rel='stylesheet', type='text/css', href='/app.css')
 		- else
 			block css
+				//Override and include all debug CSS files for your page
+
+				//Include bootstrap and our application's main.css 
 				link(rel='stylesheet', type='text/css', href='/assets/lib/css/bootstrap-2.0.0.min.css')
 				link(rel='stylesheet', type='text/css', href='/css/main.css')
 
 		- if (isProduction)
-			script(src='/app.js')
+				//Production only includes app.js
+				//It includes libraries and all the scripts for your pages.
+				script(src='/app.js')
+
 		- else
 			block scripts
+				//Override scripts and include the debug versions of the javascript files for your specific page
+
+				//Here the files required for Backbone.js are included
 				script(src='/assets/lib/js/jquery-1.7.1.min.js')
 				script(src='/assets/lib/js/underscore.js')
 				script(src='/assets/lib/js/backbone-0.9.1.js')
 				script(src='/assets/lib/js/console-dummy.js')
 				script(src='/assets/lib/js/module.js')
 				script(src='/js/index.js')
-				script(src='/js/index.js')
+		
+		//Override and enter the startup code for your page.
+		//require('page').start()
 
+		block startMain
+			script 
+				require('index').start()
 body
 	.navbar.navbar-fixed
 		.navbar-inner
