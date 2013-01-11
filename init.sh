@@ -1,3 +1,2 @@
-sudo npm install iced-coffee-script uglifyjs
-npm install iced-coffee-script underscore stitch
+npm install
 iced cake init
