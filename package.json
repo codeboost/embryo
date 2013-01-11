@@ -9,7 +9,8 @@
 		"skull.io": "*",
 		"mongoose": "*",
 		"iced-coffee-script": "*",
-		"stitch": "*"
+		"stitch": "*", 
+		"colors": "*"
 	},
 	"scripts": {
 		"start":"iced server"
