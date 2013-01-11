@@ -1,11 +1,13 @@
-Embryo is a template for web applications.
+Embryo is a template for web applications written in iced coffeescript.
+
+Note: This project is mostly for my personal use.
+Embryo was created because I needed a minimal skeleton for web apps which provides a debug and release environment.
+
+It is designed for realtime web applications built with Backbone.js, socket.io and templated with Stylus. 
+Node.js + mongodb backend.
 
 It includes the directory structure, libraries, a skeleton server implementation as well as a script
 which can build the client-side files and produce a single minified .js and .css file.
-
-This project template is mostly for my personal use, specifically designed for realtime web applications
-built with Backbone.js, socket.io and templated with Stylus. Node.js + mongodb backend.
-
 
 The server can run the debug or release version of the site.
 In debug mode, javascript and CSS files (compiled from coffee and stylus files) are accessible
@@ -19,13 +21,13 @@ Clone this repository and remove the .git directory.
 	rm -r .git/
 
 
-Install the global tools (iced-coffee-script and uglify-js@1) and dependencies:
+Start by installing the global tools and dependencies:
+	
+	./init.sh #does this: npm install iced-coffee-script uglify-js@1 && npm install
 
-	npm install -g iced-coffee-script uglify-js@1
-	npm install
 
 Initialize the project (creates the directories and configurations):
-	
+
 	iced cake init
 
 
