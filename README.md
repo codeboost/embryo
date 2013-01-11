@@ -20,6 +20,7 @@ Clone this repository and remove the .git directory.
 
 
 Install the global tools (iced-coffee-script and uglify-js@1) and dependencies:
+
 	npm install -g iced-coffee-script uglify-js@1
 	npm install
 
