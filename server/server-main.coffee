@@ -43,10 +43,10 @@ $Path[dir] = $getPath(dir) for dir in ['js'
 'tmp'
 ]
 exports.$Path = $Path
-
 init = ->
-	console.log 'Current configuration: ', $Conf
 
+	console.log 'Current configuration: ', $Conf
+	console.log 'Paths: ' , $Path
 
 	if $Conf.server.production
 		console.log 'Starting server in PRODUCTION mode'
@@ -62,7 +62,8 @@ init = ->
 
 	sessionStore = new require('./sessionStore')()
 
-	app = express.createServer()
+	app = express()
+
 	app.configure ->
 		app.use express.bodyParser()
 		app.use express.cookieParser()
@@ -72,12 +73,16 @@ init = ->
 			store: sessionStore
 			cookie: 
 				maxAge: 243600301000 #24 * 3600 * 30 * 1000
-		app.set 'views', $Path.view
+
+		console.log 'View path: ', $Path.views
+		app.set 'views', $Path.views
 		app.set 'view engine', 'jade'
 		app.set 'view options', layout: false
 
-		app.dynamicHelpers
-			isProduction: -> $Conf.server.production 
+		#app.dynamicHelpers
+		#	isProduction: -> $Conf.server.production 
+
+		app.use (err, req, res, next) -> req.locals.isProduction = $Conf.server.production
 
 	app.get '/', (req, res) ->
 		res.render 'index'
@@ -86,7 +91,6 @@ init = ->
 		res.sendfile path.join $Path['js'], req.params[0]
 
 	app.get '/css/*', (req, res) ->
-		fileName = 
 		res.sendfile path.join $Path['css'], req.params[0]
 
 	app.get '/app.js', (req, res) ->
