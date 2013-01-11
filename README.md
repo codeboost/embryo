@@ -1,4 +1,3 @@
-
 Embryo is a template for web applications.
 
 It includes the directory structure, libraries, a skeleton server implementation as well as a script
@@ -19,9 +18,14 @@ Clone this repository and remove the .git directory.
 	git clone git@github.com:codeboost/embryo.git .
 	rm -r .git/
 
-Initialize the new project: Will install basic dependencies, create directories and create the server-config.coffee
 
-	./init.sh
+Install the global tools (iced-coffee-script and uglify-js@1) and dependencies:
+	npm install -g iced-coffee-script uglify-js@1
+	npm install
+
+Initialize the project (creates the directories and configurations):
+	
+	iced cake init
 
 
 Now you can edit server-config.coffee and adjust the parameters. This file is not tracked by git (.gitignore) so you
