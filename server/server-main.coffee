@@ -79,10 +79,10 @@ init = ->
 		app.set 'view engine', 'jade'
 		app.set 'view options', layout: false
 
-		#app.dynamicHelpers
-		#	isProduction: -> $Conf.server.production 
 
-		app.use (err, req, res, next) -> req.locals.isProduction = $Conf.server.production
+	app.use (req, res, next) -> 
+		res.locals.isProduction = $Conf.server.production
+		next()
 
 	app.get '/', (req, res) ->
 		res.render 'index'
@@ -113,6 +113,7 @@ init = ->
 
 	console.log "Listening on #{$Conf.server.listen.host}:#{$Conf.server.listen.port}"
 	return app.listen $Conf.server.listen.port, $Conf.server.listen.host
+
 
 
 exports.start = init
